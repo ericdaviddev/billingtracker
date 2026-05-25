@@ -1,0 +1,16 @@
+﻿{
+  "clientExternalId": "client-001",
+  "sourceSystem": "mock-ehr",
+  "payments": [
+    {
+      "externalPaymentId": "pay-1001",
+      "externalGuarantorId": "guar-5001",
+      "externalDependentId": "dep-9001",
+      "externalLocationId": "loc-3001",
+      "amount": 125.50,
+      "paymentDate": "2026-05-24T12:30:00Z",
+      "paymentStatus": "posted",
+      "sourceUpdatedAt": "2026-05-24T12:45:00Z"
+    }
+  ]
+}

@@ -16,6 +16,9 @@ node_modules
 *.launch
 .settings/
 *.sublime-workspace
+.idea/
+**/.idea/
+*.iml
 
 # IDE - VSCode
 .vscode/*
@@ -44,3 +47,7 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 
 .angular
+
+
+# TEMP ADDITION
+/sql - Copy

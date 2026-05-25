@@ -364,36 +364,36 @@ alter table billing.payments
 -- ============================================================================
 
 create table billing.ingestion_runs (
-                                        ingestion_run_id uuid primary key default gen_random_uuid(),
+    ingestion_run_id uuid primary key default gen_random_uuid(),
 
-                                        client_id uuid not null references billing.clients(client_id),
-                                        source_system_id uuid not null references billing.source_systems(source_system_id),
+    client_id uuid not null references billing.clients(client_id),
+    source_system_id uuid not null references billing.source_systems(source_system_id),
 
     -- Example values:
     -- full_sync
     -- incremental_sync
     -- reconciliation
-                                        run_type text not null,
+    run_type text not null,
 
-                                        started_at timestamptz not null default now(),
-                                        completed_at timestamptz,
+    started_at timestamptz not null default now(),
+    completed_at timestamptz,
 
     -- Example values:
     -- running
     -- completed
     -- failed
     -- partial
-                                        status text not null,
+    status text not null,
 
-                                        records_received integer default 0,
-                                        records_inserted integer default 0,
-                                        records_updated integer default 0,
-                                        records_failed integer default 0,
+    records_received integer default 0,
+    records_inserted integer default 0,
+    records_updated integer default 0,
+    records_failed integer default 0,
 
     -- Supports cursor-based incremental synchronization.
-                                        cursor_value text,
+    cursor_value text,
 
-                                        error_message text
+    error_message text
 );
 
 comment on table billing.ingestion_runs is
@@ -562,3 +562,63 @@ create index if not exists idx_payment_events_payment_occurred
 alter table billing.payment_events
     owner to postgres;
 
+-- ============================================================================
+-- billing.location_source_mappings
+-- ============================================================================
+-- Purpose:
+--     Maps external source-system location identifiers to canonical internal
+--     platform locations.
+--
+-- Architectural Notes:
+--     Supports ingestion workflows where external payment records reference
+--     source-specific location IDs that must be resolved to internal location_id
+--     values before canonical payment records can be inserted or updated.
+--
+--     This preserves the separation between external identity and canonical
+--     internal identity, matching the same ingestion pattern used for clients,
+--     guarantors, dependents, and payments.
+--
+-- Depends On:
+--     billing.clients
+--     billing.source_systems
+--     billing.locations
+-- ============================================================================
+create table billing.location_source_mappings
+(
+    location_source_mapping_id uuid default gen_random_uuid() not null
+        primary key,
+
+    client_id uuid not null
+        references billing.clients(client_id),
+
+    source_system_id uuid not null
+        references billing.source_systems(source_system_id),
+
+    location_id uuid not null
+        references billing.locations(location_id),
+
+    external_location_id text not null,
+
+    source_updated_at timestamp with time zone,
+
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp with time zone default now() not null,
+
+    constraint location_source_mappings_unique_constraint
+        unique (client_id, source_system_id, external_location_id)
+);
+
+comment on table billing.location_source_mappings is
+    'Maps external source-system location identifiers to canonical internal platform locations for ingestion and reconciliation workflows.';
+
+create index if not exists idx_location_source_mappings_client_id
+    on billing.location_source_mappings(client_id);
+
+create index if not exists idx_location_source_mappings_source_system_id
+    on billing.location_source_mappings(source_system_id);
+
+create index if not exists idx_location_source_mappings_location_id
+    on billing.location_source_mappings(location_id);
+
+alter table billing.location_source_mappings
+    owner to postgres;
