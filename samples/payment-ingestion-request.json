@@ -1,0 +1,36 @@
+{
+  "clientExternalId": "dentrix-client-100",
+  "sourceSystem": "Dentrix",
+  "payments": [
+    {
+      "externalPaymentId": "DX-PAY-INGEST-0001",
+      "externalGuarantorId": "G-DX-1001",
+      "externalDependentId": "D-DX-1001",
+      "externalLocationId": "DX-LOC-MIDTOWN",
+      "amount": 155.75,
+      "paymentDate": "2026-05-24T12:30:00Z",
+      "paymentStatus": "posted",
+      "sourceUpdatedAt": "2026-05-24T12:45:00Z"
+    },
+    {
+      "externalPaymentId": "DX-PAY-INGEST-0002",
+      "externalGuarantorId": "G-DX-1001",
+      "externalDependentId": "D-DX-1002",
+      "externalLocationId": "DX-LOC-DOWNTOWN",
+      "amount": 225.00,
+      "paymentDate": "2026-05-24T14:15:00Z",
+      "paymentStatus": "posted",
+      "sourceUpdatedAt": "2026-05-24T14:30:00Z"
+    },
+    {
+      "externalPaymentId": "DX-PAY-INGEST-0003",
+      "externalGuarantorId": "G-DX-1002",
+      "externalDependentId": "D-DX-1003",
+      "externalLocationId": "DX-LOC-MIDTOWN",
+      "amount": 89.50,
+      "paymentDate": "2026-05-24T16:00:00Z",
+      "paymentStatus": "pending",
+      "sourceUpdatedAt": "2026-05-24T16:10:00Z"
+    }
+  ]
+}
