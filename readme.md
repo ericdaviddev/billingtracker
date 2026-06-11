@@ -4,6 +4,12 @@ BillingTracker is a backend/data-platform project focused on modeling the kinds 
 
 The project currently centers on the PostgreSQL schema and seed data. The next phase is moving from static schema design into ingestion behavior: incremental synchronization, idempotent upserts, reconciliation workflows, and operational tracking.
 
+## Project Write-Up Series
+
+I am documenting the design and implementation decisions behind BillingTracker in a Hashnode series:
+
+[Building BillingTracker](https://ericdaviddev.hashnode.dev/series/building-billingtracker)
+
 ## Project Goals
 
 BillingTracker is intended to explore backend/platform design concerns that show up in integration-heavy systems, especially in healthcare, fintech, billing, and data synchronization domains.
