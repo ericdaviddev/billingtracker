@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DROP SCHEMA IF EXISTS billing CASCADE;
-CREATE SCHEMA billing;
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
 export PGPASSWORD="${BILLINGTRACKER_DB_PASSWORD:-billing}"
 
 DB_HOST="${BILLINGTRACKER_DB_HOST:-db}"
@@ -36,6 +32,5 @@ run_sql "sql/billing_create_tables.sql"
 run_sql "sql/seed_data_inserts.sql"
 
 echo "Database reset complete."
-EOF
 
 chmod +x scripts/reset-db.sh

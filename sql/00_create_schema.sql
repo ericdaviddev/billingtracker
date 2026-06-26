@@ -1,3 +1,5 @@
-﻿create schema if not exists billing;
+﻿DROP SCHEMA IF EXISTS billing CASCADE;
+
+create schema billing;
 
 create extension if not exists pgcrypto;
