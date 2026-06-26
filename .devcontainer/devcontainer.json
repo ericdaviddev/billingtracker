@@ -1,0 +1,41 @@
+{
+  "name": "BillingTracker",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/billingtracker",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.13"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "forwardPorts": [5000, 8000, 5432],
+  "portsAttributes": {
+    "5000": {
+      "label": ".NET API"
+    },
+    "8000": {
+      "label": "FastAPI"
+    },
+    "5432": {
+      "label": "Postgres"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg"
+      ]
+    }
+  },
+  "postCreateCommand": "dotnet --info && python --version && psql --version"
+}
