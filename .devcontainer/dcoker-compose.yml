@@ -1,0 +1,30 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/dotnet:1-9.0-bookworm
+    volumes:
+      - ..:/workspaces/billingtracker:cached
+    command: sleep infinity
+    depends_on:
+      - db
+    environment:
+      ConnectionStrings__BillingTracker: Host=db;Port=5432;Database=billingtracker;Username=billing;Password=billing
+      BILLINGTRACKER_DB_HOST: db
+      BILLINGTRACKER_DB_PORT: 5432
+      BILLINGTRACKER_DB_NAME: billingtracker
+      BILLINGTRACKER_DB_USER: billing
+      BILLINGTRACKER_DB_PASSWORD: billing
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: billingtracker
+      POSTGRES_USER: billing
+      POSTGRES_PASSWORD: billing
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
