@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/BillingTracker.Api/BillingTracker.Api.csproj" />
+    <Project Path="src/BillingTracker.Application/BillingTracker.Application.csproj" />
+    <Project Path="src/BillingTracker.Infrastructure/BillingTracker.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BillingTracker.Application.Tests/BillingTracker.Application.Tests.csproj" />
+    <Project Path="tests/BillingTracker.Infrastructure.Tests/BillingTracker.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>
