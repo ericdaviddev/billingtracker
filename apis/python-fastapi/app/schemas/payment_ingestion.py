@@ -3,10 +3,21 @@ from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 
-class PaymentIngestionItem(BaseModel):
+class CamelCaseModel(BaseModel):
     model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class PaymentIngestionItem(CamelCaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
         str_strip_whitespace=True,
         validate_assignment=True,
     )
@@ -59,22 +70,22 @@ class PaymentIngestionItem(BaseModel):
     )
 
 
-class PaymentIngestionRequest(BaseModel):
+class PaymentIngestionRequest(CamelCaseModel):
     model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
         str_strip_whitespace=True,
         validate_assignment=True,
     )
 
     client_external_id: str = Field(
         ...,
-        alias="clientExternalId",
         description="External client identifier from source system",
         min_length=1,
     )
 
     source_system: str = Field(
         ...,
-        alias="sourceSystem",
         description="Source system name (e.g., Dentrix, Epic, AthenaHealth)",
         min_length=1,
     )
@@ -86,8 +97,12 @@ class PaymentIngestionRequest(BaseModel):
     )
 
 
-class PaymentIngestionResultItem(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class PaymentIngestionResultItem(CamelCaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
 
     external_payment_id: str = Field(
         ...,
@@ -110,8 +125,12 @@ class PaymentIngestionResultItem(BaseModel):
     )
 
 
-class PaymentIngestionResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class PaymentIngestionResponse(CamelCaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
 
     ingestion_run_id: UUID = Field(
         ...,

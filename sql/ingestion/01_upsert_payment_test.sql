@@ -1,65 +1,63 @@
-﻿-- Demonstrates idempotent payment ingestion using:
+﻿-- ============================================================================
+-- Idempotent payment ingestion proof
+-- ============================================================================
+-- Demonstrates idempotent payment ingestion using:
+--
 --   client_id + source_system_id + external_payment_id
 --
 -- Scenarios tested:
---   1. first insert creates the payment
---   2. rerun with same payload does not create duplicate
---   3. newer source_updated_at updates the row
---   4. older source_updated_at does not overwrite newer data
-
+--   1. First insert creates the payment.
+--   2. Rerunning the same payload does not create a duplicate.
+--   3. A newer source_updated_at updates the existing payment row.
+--   4. An older source_updated_at does not overwrite newer data.
+--
 -- Test sequence:
 --
--- First run
--- 'DX-PAY-INGEST-0001'::text as external_payment_id
+-- 1. First run
+--      external_payment_id = 'DX-PAY-INGEST-0001'
 --
--- Expected: new payment inserted.
+--      Expected:
+--      A new payment is inserted.
 --
--- Second run with same exact payload
+-- 2. Second run with the same exact payload
+--      Keep the same external_payment_id and all other values unchanged.
 --
--- Same external_payment_id.
+--      Expected:
+--      No duplicate payment is created. The insert hits the conflict rule.
 --
--- Expected: no duplicate payment. It should hit the conflict rule.
+-- 3. Third run with the same external_payment_id but newer source_updated_at
+--      external_payment_id = 'DX-PAY-INGEST-0001'
+--      payment_amount = 175.25
+--      payment_status = 'posted'
+--      source_updated_at = '2026-05-24T13:45:00Z'
 --
--- Third run with same external ID but newer source_updated_at and changed amount/status
--- 'DX-PAY-INGEST-0001'::text as external_payment_id,
--- 175.25::numeric(12,2) as payment_amount,
--- 'posted'::text as payment_status,
--- '2026-05-24T13:45:00Z'::timestamptz as source_updated_at
+--      Expected:
+--      The existing payment row is updated.
 --
--- Expected: same payment row updates.
+-- 4. Fourth run with the same external_payment_id but older source_updated_at
+--      payment_amount = 99.00
+--      source_updated_at = '2026-05-24T11:00:00Z'
 --
--- Fourth run with same external ID but older source_updated_at
--- 99.00::numeric(12,2) as payment_amount,
--- '2026-05-24T11:00:00Z'::timestamptz as source_updated_at
+--      Expected:
+--      The older payload does not overwrite the newer payment row because of
+--      the stale update guard:
 --
--- Expected: old payload does not overwrite the newer payment.
+--          where billing.payments.source_updated_at <= excluded.source_updated_at
 --
 -- After each run, verify with:
--- ingestion/02_verify_payment_upsert.sql
+--
+--   sql/ingestion/02_verify_payment_upsert.sql
 
--- select
---     payment_id,
---     external_payment_id,
---     payment_amount,
---     payment_status,
---     source_updated_at,
---     created_at,
---     updated_at
--- from billing.payments
--- where external_payment_id = 'DX-PAY-INGEST-0001';
+-- Notes:
+--   The values in incoming_payment can be changed to test other source payloads.
+--   Keep external_payment_id the same when testing idempotent reruns, newer
+--   updates, or stale updates.
 --
--- And confirm no duplicates:
+--   Change external_payment_id when you want to test a brand-new payment insert.
 --
--- select
---     client_id,
---     source_system_id,
---     external_payment_id,
---     count(*)
--- from billing.payments
--- where external_payment_id = 'DX-PAY-INGEST-0001'
--- group by client_id, source_system_id, external_payment_id;
---
--- Expected count: 1.
+--   If any external identifier is changed, make sure matching seed data exists
+--   for the client, source system, guarantor, dependent, and location mapping.
+-- ============================================================================
 
 with incoming_payment as (
     select
@@ -73,42 +71,42 @@ with incoming_payment as (
         '2026-05-24T12:30:00Z'::timestamptz as payment_date,
         'posted'::text as payment_status,
         '2026-05-24T11:45:00Z'::timestamptz as source_updated_at
-),
-     resolved_payment as (
-         select
-             c.client_id,
-             ss.source_system_id,
-             l.location_id,
-             g.guarantor_id,
-             d.dependent_id,
-             ip.external_payment_id,
-             ip.payment_amount,
-             ip.payment_date,
-             ip.payment_status,
-             ip.source_updated_at
-         from incoming_payment ip
-                  join billing.source_systems ss
-                       on ss.source_system_name = ip.source_system_name
-                  join billing.client_source_mappings csm
-                       on csm.source_system_id = ss.source_system_id
-                           and csm.external_client_id = ip.external_client_id
-                  join billing.clients c
-                       on c.client_id = csm.client_id
-                  join billing.guarantors g
-                       on g.client_id = c.client_id
-                           and g.source_system_id = ss.source_system_id
-                           and g.external_guarantor_id = ip.external_guarantor_id
-                  join billing.dependents d
-                       on d.client_id = c.client_id
-                           and d.source_system_id = ss.source_system_id
-                           and d.external_dependent_id = ip.external_dependent_id
-                  join billing.location_source_mappings lsm
-                       on lsm.client_id = c.client_id
-                           and lsm.source_system_id = ss.source_system_id
-                           and lsm.external_location_id = ip.external_location_id
-                  join billing.locations l
-                       on l.location_id = lsm.location_id
-     )
+	),
+	resolved_payment as (
+		select
+			 c.client_id,
+			 ss.source_system_id,
+			 l.location_id,
+			 g.guarantor_id,
+			 d.dependent_id,
+			 ip.external_payment_id,
+			 ip.payment_amount,
+			 ip.payment_date,
+			 ip.payment_status,
+			 ip.source_updated_at
+		 from incoming_payment ip
+				  join billing.source_systems ss
+					   on ss.source_system_name = ip.source_system_name
+				  join billing.client_source_mappings csm
+					   on csm.source_system_id = ss.source_system_id
+						   and csm.external_client_id = ip.external_client_id
+				  join billing.clients c
+					   on c.client_id = csm.client_id
+				  join billing.guarantors g
+					   on g.client_id = c.client_id
+						   and g.source_system_id = ss.source_system_id
+						   and g.external_guarantor_id = ip.external_guarantor_id
+				  join billing.dependents d
+					   on d.client_id = c.client_id
+						   and d.source_system_id = ss.source_system_id
+						   and d.external_dependent_id = ip.external_dependent_id
+				  join billing.location_source_mappings lsm
+					   on lsm.client_id = c.client_id
+						   and lsm.source_system_id = ss.source_system_id
+						   and lsm.external_location_id = ip.external_location_id
+				  join billing.locations l
+					   on l.location_id = lsm.location_id
+	 )
 /*select *
 from resolved_payment;*/
 
