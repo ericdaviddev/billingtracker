@@ -59,7 +59,7 @@ create table billing.clients
 );
 
 alter table billing.clients
-    owner to postgres;
+    owner to billing;
 
 
 -- ============================================================================
@@ -94,7 +94,7 @@ create table billing.locations
 );
 
 alter table billing.locations
-    owner to postgres;
+    owner to billing;
 
 
 -- ============================================================================
@@ -125,7 +125,7 @@ create table billing.source_systems
 );
 
 alter table billing.source_systems
-    owner to postgres;
+    owner to billing;
 
 
 -- ============================================================================
@@ -168,7 +168,7 @@ create table billing.client_source_mappings
 );
 
 alter table billing.client_source_mappings
-    owner to postgres;
+    owner to billing;
 
 
 -- ============================================================================
@@ -219,7 +219,7 @@ create table billing.guarantors
 );
 
 alter table billing.guarantors
-    owner to postgres;
+    owner to billing;
 
 
 -- ============================================================================
@@ -269,7 +269,7 @@ create table billing.dependents
 );
 
 alter table billing.dependents
-    owner to postgres;
+    owner to billing;
 
 
 -- ============================================================================
@@ -339,7 +339,7 @@ create table billing.payments
 );
 
 alter table billing.payments
-    owner to postgres;
+    owner to billing;
 
 
 -- ============================================================================
@@ -416,7 +416,7 @@ create index if not exists idx_ingestion_runs_client_source_started
     on billing.ingestion_runs (client_id, source_system_id, started_at desc);
 
 alter table billing.ingestion_runs
-    owner to postgres;
+    owner to billing;
 
 
 -- ============================================================================
@@ -463,7 +463,7 @@ create index if not exists idx_ingestion_errors_created_at
     on billing.ingestion_errors (created_at desc);
 
 alter table billing.ingestion_errors
-    owner to postgres;
+    owner to billing;
 
 
 -- ============================================================================
@@ -507,7 +507,7 @@ create index if not exists idx_source_sync_state_last_successful_sync_at
     on billing.source_sync_state (last_successful_sync_at desc);
 
 alter table billing.source_sync_state
-    owner to postgres;
+    owner to billing;
 
 
 -- ============================================================================
@@ -560,7 +560,7 @@ create index if not exists idx_payment_events_payment_occurred
     on billing.payment_events (payment_id, occurred_at desc);
 
 alter table billing.payment_events
-    owner to postgres;
+    owner to billing;
 
 -- ============================================================================
 -- billing.location_source_mappings
@@ -621,4 +621,4 @@ create index if not exists idx_location_source_mappings_location_id
     on billing.location_source_mappings(location_id);
 
 alter table billing.location_source_mappings
-    owner to postgres;
+    owner to billing;
