@@ -32,15 +32,15 @@ I am documenting the design and implementation decisions behind BillingTracker i
 
 ```mermaid
 flowchart LR
-    Source[External Billing Source] --> API[ASP.NET Core API]
-    API --> App[Application Service]
-    App --> Repo[Infrastructure Repository]
-    Repo --> DB[(PostgreSQL billing schema)]
+    Source["External Billing Source"] --> API["ASP.NET Core API"]
+    API --> App["Application Service"]
+    App --> Repo["Infrastructure Repository"]
+    Repo --> DB["PostgreSQL billing schema"]
 
-    App --> Run[Ingestion Run Tracking]
-    App --> Errors[Ingestion Error Capture]
-    Repo --> Payments[Idempotent Payment Upsert]
-    Repo --> Identity[Source-System Identity Resolution]
+    App --> RunTracking["Ingestion Run Tracking"]
+    App --> ErrorCapture["Ingestion Error Capture"]
+    Repo --> PaymentUpsert["Idempotent Payment Upsert"]
+    Repo --> IdentityResolution["Source-System Identity Resolution"]
 ```
 
 The .NET ingestion flow accepts payment payloads from an external source system, resolves the source system and tenant/client mapping, resolves related business entities, writes an ingestion run, upserts payment records safely, records failed items, and completes the ingestion run with operational counts.
