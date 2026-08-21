@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/apis/" />
+  <Folder Name="/apis/dotnet/" />
+  <Folder Name="/apis/dotnet/src/">
+    <Project Path="apis/dotnet/src/BillingTracker.Api/BillingTracker.Api.csproj" />
+    <Project Path="apis/dotnet/src/BillingTracker.Application/BillingTracker.Application.csproj" />
+    <Project Path="apis/dotnet/src/BillingTracker.Infrastructure/BillingTracker.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/apis/dotnet/tests/">
+    <Project Path="apis/dotnet/tests/BillingTracker.Application.Tests/BillingTracker.Application.Tests.csproj" />
+    <Project Path="apis/dotnet/tests/BillingTracker.Infrastructure.Tests/BillingTracker.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>
