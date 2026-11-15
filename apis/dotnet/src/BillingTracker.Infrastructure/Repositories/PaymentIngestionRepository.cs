@@ -241,24 +241,25 @@ public class PaymentIngestionRepository : IPaymentIngestionRepository
         CancellationToken cancellationToken)
     {
         const string sql = @"   
-            SELECT source_updated_at
+            SELECT source_updated_at = @sourceUpdatedAt
             FROM billing.payments
             WHERE client_id = @clientId
                 AND source_system_id = @sourceSystemId
                 AND external_payment_id = @externalPaymentId";
 
         await using var cmd = new NpgsqlCommand(sql, connection);
+        cmd.Parameters.AddWithValue("@sourceUpdatedAt", command.SourceUpdatedAt);
         cmd.Parameters.AddWithValue("@clientId", command.ClientId);
         cmd.Parameters.AddWithValue("@sourceSystemId", command.SourceSystemId);
         cmd.Parameters.AddWithValue("@externalPaymentId", command.ExternalPaymentId);
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         var hasRow = await reader.ReadAsync(cancellationToken);
-        var existing = hasRow ? reader.GetFieldValue<DateTimeOffset>(0) : (DateTimeOffset?)null;
+        var sameTimeStamp = hasRow && !reader.IsDBNull(0) && reader.GetBoolean(0);
         
         // the upsert only skips on an equal timestamp when the content is identical
-        return existing == command.SourceUpdatedAt
-            ? new PaymentUpsertResult()
+        return sameTimeStamp
+            ? new PaymentUpsertResult
             {
                 Status = PaymentIngestionItemStatus.SkippedUnchanged,
                 ErrorMessage = "Payment already up to date; no changes to apply"

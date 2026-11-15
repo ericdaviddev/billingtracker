@@ -61,4 +61,16 @@ public class PaymentIngestionRepositoryTests : IClassFixture<PostgresFixture>
         
         Assert.Equal(PaymentIngestionItemStatus.SkippedStale, result.Status);
     }
+    
+    [Fact]
+    public async Task UpsertPaymentAsync_WhenTimestampHasSubMicrosecondPrecision_ReturnsSkippedUnchanged()
+    {
+        var ts = new DateTimeOffset(2026, 5, 24, 12, 45, 0, TimeSpan.Zero).AddTicks(1);
+        var cmd = Command("TEST-TICKS-001", ts);
+
+        await _repo.UpsertPaymentAsync(cmd, CancellationToken.None);
+        var second = await _repo.UpsertPaymentAsync(cmd, CancellationToken.None);
+
+        Assert.Equal(PaymentIngestionItemStatus.SkippedUnchanged, second.Status);
+    }
 }
