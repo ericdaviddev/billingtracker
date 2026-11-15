@@ -182,7 +182,21 @@ public class PaymentIngestionRepository : IPaymentIngestionRepository
                 payment_status = EXCLUDED.payment_status,
                 source_updated_at = EXCLUDED.source_updated_at,
                 updated_at = NOW()
-            WHERE billing.payments.source_updated_at <= EXCLUDED.source_updated_at
+            WHERE billing.payments.source_updated_at < EXCLUDED.source_updated_at
+               OR (billing.payments.source_updated_at = EXCLUDED.source_updated_at
+                   AND (billing.payments.location_id,
+                        billing.payments.guarantor_id,
+                        billing.payments.dependent_id,
+                        billing.payments.payment_amount,
+                        billing.payments.payment_date,
+                        billing.payments.payment_status)
+                       IS DISTINCT FROM
+                       (EXCLUDED.location_id,
+                        EXCLUDED.guarantor_id,
+                        EXCLUDED.dependent_id,
+                        EXCLUDED.payment_amount,
+                        EXCLUDED.payment_date,
+                        EXCLUDED.payment_status))
             RETURNING payment_id, 
                       CASE 
                           WHEN xmax = 0 THEN 'inserted'
@@ -205,26 +219,56 @@ public class PaymentIngestionRepository : IPaymentIngestionRepository
         cmd.Parameters.AddWithValue("@paymentStatus", command.PaymentStatus);
         cmd.Parameters.AddWithValue("@sourceUpdatedAt", command.SourceUpdatedAt);
 
-        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        
-        if (await reader.ReadAsync(cancellationToken))
+        await using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
         {
-            var paymentId = reader.GetGuid(0);
-            var operation = reader.GetString(1);
-            var status = FromDatabaseStatus(operation);
-
-            return new PaymentUpsertResult
+            if (await reader.ReadAsync(cancellationToken))
             {
-                PaymentId = paymentId,
-                Status = status
-            };
+                return new PaymentUpsertResult
+                {
+                    PaymentId = reader.GetGuid(0),
+                    Status = FromDatabaseStatus(reader.GetString(1))
+                };
+            }
         }
 
-        return new PaymentUpsertResult
-        {
-            Status = PaymentIngestionItemStatus.SkippedStale,
-            ErrorMessage = "Payment was not updated due to stale source_updated_at timestamp"
-        };
+        // The reader is disposed here, so the connection is free for another command.
+        return await ClassifySkippedAsync(connection, command, cancellationToken);
+    }
+
+    private static async Task<PaymentUpsertResult> ClassifySkippedAsync(
+        NpgsqlConnection connection,
+        PaymentCommand command,
+        CancellationToken cancellationToken)
+    {
+        const string sql = @"   
+            SELECT source_updated_at = @sourceUpdatedAt
+            FROM billing.payments
+            WHERE client_id = @clientId
+                AND source_system_id = @sourceSystemId
+                AND external_payment_id = @externalPaymentId";
+
+        await using var cmd = new NpgsqlCommand(sql, connection);
+        cmd.Parameters.AddWithValue("@sourceUpdatedAt", command.SourceUpdatedAt);
+        cmd.Parameters.AddWithValue("@clientId", command.ClientId);
+        cmd.Parameters.AddWithValue("@sourceSystemId", command.SourceSystemId);
+        cmd.Parameters.AddWithValue("@externalPaymentId", command.ExternalPaymentId);
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        var hasRow = await reader.ReadAsync(cancellationToken);
+        var sameTimeStamp = hasRow && !reader.IsDBNull(0) && reader.GetBoolean(0);
+        
+        // the upsert only skips on an equal timestamp when the content is identical
+        return sameTimeStamp
+            ? new PaymentUpsertResult
+            {
+                Status = PaymentIngestionItemStatus.SkippedUnchanged,
+                ErrorMessage = "Payment already up to date; no changes to apply"
+            }
+            : new PaymentUpsertResult
+            {
+                Status = PaymentIngestionItemStatus.SkippedStale,
+                ErrorMessage = "Payment was not updated due to stale source_updated_at timestamp"
+            };
     }
 
     public async Task InsertIngestionErrorAsync(

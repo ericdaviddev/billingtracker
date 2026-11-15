@@ -5,5 +5,6 @@ public enum PaymentIngestionItemStatus
     Inserted,
     Updated,
     SkippedStale,
+    SkippedUnchanged,
     Failed
 }
