@@ -72,11 +72,14 @@ public class PaymentIngestionService
                     recordsUpdated++;
                     break;
                 case PaymentIngestionItemStatus.SkippedStale:
+                case PaymentIngestionItemStatus.SkippedUnchanged:
                     // Skipped records are not counted as failures
                     break;
                 case PaymentIngestionItemStatus.Failed:
                     recordsFailed++;
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(itemResult.Status.ToString());
             }
         }
 
